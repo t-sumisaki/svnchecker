@@ -28,6 +28,7 @@ type SVNInfo struct {
 	Checksum            string
 	LockToken           string
 	LockOwner           string
+	LockCreated         string
 }
 
 func (t SVNInfo) IsLocked() bool {
@@ -51,6 +52,7 @@ const (
 	SVN_Checksum            = "Checksum"
 	SVN_LockToken           = "Lock Token"
 	SVN_LockOwner           = "Lock Owner"
+	SVN_LockCreated         = "Lock Created"
 )
 
 func parseSVNInfo(src string) (*SVNInfo, error) {
@@ -89,8 +91,14 @@ func parseSVNInfo(src string) (*SVNInfo, error) {
 			info.LastChangedAuthor = value
 		case SVN_LastChangedRev:
 			info.LastChangedRev = value
-		case info.LastChangedDate:
+		case SVN_LastChangedDate:
 			info.LastChangedDate = value
+		case SVN_LockOwner:
+			info.LockOwner = value
+		case SVN_LockToken:
+			info.LockToken = value
+		case SVN_LockCreated:
+			info.LockCreated = value
 		}
 	}
 
@@ -102,7 +110,10 @@ func GetInfo(path string) (*SVNInfo, error) {
 
 	out, err := exec.Command("svn", "info", path).Output()
 	if err != nil {
-		return nil, fmt.Errorf("svn info command error: %w", err)
+		// 失敗の原因には、ソースコントロール対象外であることも含まれる
+		// この段階でエラーを吐く場合は一旦無視することとする
+		// return nil, fmt.Errorf("svn info command error: %w", err)
+		return nil, nil
 	}
 
 	buf := bytes.NewBuffer(out)
